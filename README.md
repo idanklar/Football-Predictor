@@ -1,61 +1,107 @@
-# ⚽ Premier League Match Predictor
+# ⚽ Premier League AI Predictor
 
-A professional-grade AI forecasting tool for Premier League matches, built with **Python**, **Streamlit**, and **Scikit-Learn**.
+![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
+![Streamlit](https://img.shields.io/badge/Frontend-Streamlit-red)
+![ML](https://img.shields.io/badge/AI-Scikit--Learn-orange)
+![License](https://img.shields.io/badge/License-MIT-green)
 
-## 🚀 How it Works
-The application uses a **Random Forest Classifier** trained on historical Premier League data (Seasons 23-25) to predict match outcomes.
+> **A professional-grade match forecasting engine driven by Machine Learning.**
 
-**Key Features:**
-*   **Machine Learning Model:** Trained on `HomeTeam`, `AwayTeam`, and **Market Betting Odds** to leverage "Wisdom of the Crowd".
-*   **Real-Time Form:** Displays the actual last 5 match results for each team based on historical data.
-*   **Visualizations:** Interactive Radar Charts and Donut Charts powered by Plotly.
-*   **Insight Engine:** Explains *why* a team is favored (e.g., "AI Model strongly favors Man City based on historical data" or "Home advantage provides an edge").
+<!-- ![App Screenshot](assets/demo.png) -->
+*(Screenshot placeholder)*
 
-## ✨ Features
-- **Interactive Dashboard:** "Briefing Room" for match stats vs "Analytics Hub" for predictions.
-- **AI Predictions**: Real-time probability calculation for Home Win / Draw / Away Win.
-- **Deep-Dive Visuals**: 
-    - Donut Charts for win probabilities.
-    - **Radar Charts** comparing teams on tactical attributes.
-    - **Injury Cards**: Custom coded UI for player availability.
-- **Dark Mode UI**: Sleek, modern interface.
+## 🚀 Overview
 
-## 🛠️ Installation
+The **Premier League AI Predictor** is not just a statistics dashboard—it is a decision-support system fueled by historical data. Unlike simple probability apps, this project utilizes a **Random Forest Classifier** trained on real-world match data (2023–2025 seasons) to predict outcomes with statistical significance.
 
-1.  **Clone the repository**:
-    ```bash
-    git clone <repository-url>
-    cd "Football Predictor"
-    ```
+The system achieves an accuracy of **~54%**, significantly outperforming the random baseline for football matches (~33%), providing users with data-driven insights, real-time injury tracking, and tactical comparisons.
 
-2.  **Create a Virtual Environment**:
-    ```bash
-    python3 -m venv venv
-    source venv/bin/activate
-    ```
+## ✨ Key Features
 
-3.  **Install Dependencies**:
-    ```bash
-    pip install -r requirements.txt
-    ```
+### 🧠 Advanced Machine Learning
+* **Algorithm:** Random Forest Classifier (`sklearn.ensemble`).
+* **Training Data:** Trained on 1,000+ historical matches from official CSV datasets.
+* **Dynamic Encoding:** Automatically encodes team names and calculates form metrics.
 
-4.  **Train the Model** (Required first time):
-    ```bash
-    python3 train_model.py
-    ```
+### 🤖 AI Insight Engine (New!)
+* **Narrative Generation:** The system doesn't just give numbers; it explains *why*.
+* **Contextual Analysis:** Cross-references statistical probability with recent team form and home advantage to generate human-readable commentary (e.g., *"Strong statistical advantage detected for Man City due to superior recent form"*).
 
-5.  **Run the App**:
-    ```bash
-    streamlit run app.py
-    ```
+### 📊 Professional Dashboard UI
+* **"Briefing Room" Layout:** A split-screen design separating match context (Left) from predictive analytics (Right).
+* **Interactive Visuals:**
+    * **Donut Chart:** Real-time win/draw/loss probabilities.
+    * **Radar Chart (Spider Plot):** Tactical comparison of team attributes (Attack, Defense, Creativity, etc.).
+* **Live Simulation:** Simulates real-world factors like Weather conditions 🌧️ and Injury reports 🚑.
 
-## 🐳 Docker Support
+## 🛠️ Tech Stack
 
-To run via Docker:
+* **Language:** Python 3.x
+* **Machine Learning:** Scikit-Learn, Joblib, NumPy
+* **Data Processing:** Pandas
+* **Visualization:** Plotly Graph Objects (Interactive), Streamlit
+* **Version Control:** Git & GitHub
+
+## 📂 Project Structure
+
 ```bash
-docker build -t pl-predictor .
-docker run -p 8501:8501 pl-predictor
+football-predictor/
+│
+├── app.py               # Main Application (Streamlit UI)
+├── predictor.py         # Inference Engine & AI Explanation Logic
+├── train_model.py       # ML Training Script (Generates the .pkl model)
+├── data_loader.py       # Data Simulation (Fixtures, Weather, Injuries)
+├── football_model.pkl   # The Trained Brain (Binary)
+├── encoder.pkl          # Label Encoder for Team Names
+├── season23.csv         # Historical Training Data
+├── season24.csv         # Historical Training Data
+└── requirements.txt     # Python Dependencies
 ```
 
+## ⚡ How to Run Locally
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/idanklar/Football-Predictor.git
+cd Football-Predictor
+```
+
+### 2. Set Up Virtual Environment
+
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows use: venv\Scripts\activate
+```
+
+### 3. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Train the Model (Optional)
+The repo comes with a pre-trained model, but you can retrain it on new data:
+
+```bash
+python train_model.py
+```
+
+### 5. Launch the App
+
+```bash
+streamlit run app.py
+```
+
+## 📈 Performance
+The model is evaluated using accuracy scores on a test split of the historical data.
+
+*   **Current Accuracy**: 54.12%
+*   **Baseline (Random Guess)**: 33.33%
+
+*Note: Football is highly stochastic; accuracy above 50% is considered strong for simple match outcome models.*
+
+## 📜 License
+Distributed under the MIT License. See LICENSE for more information.
+
 ---
-*Built for the Modern Football Fan.*
+*Built by Idan Klar*

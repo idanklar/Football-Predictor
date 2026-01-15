@@ -41,6 +41,26 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
+import base64
+
+# --- Helper Function: Image handling ---
+def get_img_as_base64(file_path):
+    """
+    Reads an image file (local) and returns a base64 string for HTML embedding.
+    If it's a URL (http/https), returns it as is.
+    """
+    if file_path.startswith("http") or file_path.startswith("https"):
+        return file_path
+    
+    try:
+        with open(file_path, "rb") as f:
+            data = f.read()
+            encoded = base64.b64encode(data).decode()
+        return f"data:image/png;base64,{encoded}"
+    except Exception as e:
+        # Fallback if file not found
+        return "https://via.placeholder.com/100?text=Logo"
+
 # --- Helper Function: Injury Card ---
 def render_injury_card(team_name, injuries, color_code):
     injuries_html = "".join([f"<li>{inj}</li>" for inj in injuries]) if injuries else "<li>No major injuries</li>"
@@ -80,6 +100,11 @@ selected_match_id = st.sidebar.radio(
     index=0
 )
 
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 🤖 Model Stats")
+st.sidebar.metric("Model Accuracy", "54.1%", delta="vs Random (33%)")
+st.sidebar.info("Trained on 3 Seasons of PL Data (2023-2025).")
+
 # Helper to find selected match data
 match_index = [f"{f['home_team']} vs {f['away_team']}" for f in fixtures].index(selected_match_id)
 selected_match = fixtures[match_index]
@@ -94,12 +119,14 @@ with col1:
     # Match Header (Logos/VS)
     h_col1, h_col2, h_col3 = st.columns([1, 0.8, 1])
     with h_col1:
-        st.markdown(f"<div style='text-align: center;'><img src='{selected_match['home_team_logo']}' width='100'></div>", unsafe_allow_html=True)
+        logo_h = get_img_as_base64(selected_match['home_team_logo'])
+        st.markdown(f"<div style='text-align: center;'><img src='{logo_h}' width='100'></div>", unsafe_allow_html=True)
         st.markdown(f"<p class='team-name-header'>{selected_match['home_team']}</p>", unsafe_allow_html=True)
     with h_col2:
         st.markdown("<p class='vs-text'>VS</p>", unsafe_allow_html=True)
     with h_col3:
-        st.markdown(f"<div style='text-align: center;'><img src='{selected_match['away_team_logo']}' width='100'></div>", unsafe_allow_html=True)
+        logo_a = get_img_as_base64(selected_match['away_team_logo'])
+        st.markdown(f"<div style='text-align: center;'><img src='{logo_a}' width='100'></div>", unsafe_allow_html=True)
         st.markdown(f"<p class='team-name-header'>{selected_match['away_team']}</p>", unsafe_allow_html=True)
         
     st.write("---")
@@ -142,7 +169,20 @@ with col2:
     <div style="text-align: center; padding: 10px; background-color: rgba(0, 204, 150, 0.1); border-radius: 10px; border: 1px solid #00cc96; margin-bottom: 20px;">
         <h2 style='margin:0; color: #00cc96;'>🏆 Prediction: {predicted_winner}</h2>
         <h1 style='margin:0; font-size: 3em; color: white;'>{win_prob}%</h1>
-        <p style='color: #ccc; font-style: italic;'>{prediction['reasoning']}</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # AI Explanation Engine UI
+    st.markdown(f"""
+    <div style="
+        background-color: rgba(0, 100, 255, 0.1); 
+        border-left: 4px solid #00b4d8;
+        padding: 15px; 
+        border-radius: 5px; 
+        margin-bottom: 20px;
+    ">
+        <strong style="color: #00b4d8; font-size: 1.1em;">🤖 AI Insight:</strong><br>
+        <span style="color: #e0e0e0; font-size: 1em;">{prediction['reasoning']}</span>
     </div>
     """, unsafe_allow_html=True)
 

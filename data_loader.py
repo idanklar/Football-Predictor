@@ -54,7 +54,7 @@ def get_current_fixtures():
             "away_injuries": ["Timber (Knee)", "Partey (Thigh)"],
             "last_5_matches_home": ["L", "L", "L", "L", "W"], # Nottingham Forest Form
             "last_5_matches_away": ["W", "W", "W", "W", "D"], # Arsenal Form
-            "home_team_logo": "https://upload.wikimedia.org/wikipedia/en/thumb/d/d2/Nottingham_Forest_gridiron.svg/1200px-Nottingham_Forest_gridiron.svg.png", # Using Gridiron logo variation as fallback or standard one but PNG
+            "home_team_logo": "assets/nottm_forest_logo.png", # Updated from User Upload
             "away_team_logo": "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Arsenal_FC.svg/1200px-Arsenal_FC.svg.png",
             "home_strength": 3,
             "away_strength": 1,
@@ -73,7 +73,7 @@ def get_current_fixtures():
             "last_5_matches_home": ["W", "W", "D", "D", "D"], # Liverpool Form
             "last_5_matches_away": ["D", "D", "L", "L", "D"], # Burnley Form
             "home_team_logo": "https://upload.wikimedia.org/wikipedia/en/thumb/0/0c/Liverpool_FC.svg/1200px-Liverpool_FC.svg.png",
-            "away_team_logo": "https://upload.wikimedia.org/wikipedia/en/thumb/6/62/Burnley_F.C._Logo.svg/1200px-Burnley_F.C._Logo.svg.png",
+            "away_team_logo": "assets/burnley_logo.png", # Updated from User Upload
             "home_strength": 1,
             "away_strength": 3,
             "avg_odds_home": 1.15,

@@ -111,15 +111,72 @@ class MatchPredictor:
         p_draw = round(p_draw * 100, 1)
         p_away = round(p_away * 100, 1)
 
-        # Generate Reasoning
-        reasoning = self._generate_reasoning(match_data, p_home, p_draw, p_away)
+        # Generate Reasoning using the new Engine
+        explanation = self.generate_explanation(
+            match_data['home_team'], 
+            match_data['away_team'], 
+            {'home': p_home, 'draw': p_draw, 'away': p_away}, 
+            match_data['last_5_matches_home'], 
+            match_data['last_5_matches_away']
+        )
 
         return {
             "home_win_prob": p_home,
             "draw_prob": p_draw,
             "away_win_prob": p_away,
-            "reasoning": reasoning
+            "reasoning": explanation
         }
+
+    def generate_explanation(self, home_team, away_team, probs, home_form, away_form):
+        """
+        Generates a conversational explanation for the prediction.
+        """
+        # Determine Winner
+        if probs['home'] > probs['away'] and probs['home'] > probs['draw']:
+            winner = home_team
+            win_prob = probs['home']
+            is_home_win = True
+        elif probs['away'] > probs['home'] and probs['away'] > probs['draw']:
+            winner = away_team
+            win_prob = probs['away']
+            is_home_win = False
+        else:
+            winner = "Draw"
+            win_prob = probs['draw']
+            is_home_win = None
+
+        text = []
+
+        # 1. Confidence Check
+        if winner == "Draw":
+            text.append("The model predicts a deadlock due to evenly matched historical performance.")
+        elif win_prob > 60:
+            text.append(f"Strong statistical advantage detected for {winner}.")
+        elif win_prob > 40:
+            text.append(f"A tightly contested match is expected, with a slight edge for {winner}.")
+        else:
+            text.append(f"The outcome is uncertain, but {winner} is marginally favored.")
+
+        # 2. Form Factor
+        # Calculate recent wins
+        home_wins = home_form.count('W')
+        away_wins = away_form.count('W')
+        
+        if is_home_win is True and home_wins > away_wins:
+            text.append("Recent form is a key differentiator.")
+        elif is_home_win is False and away_wins > home_wins:
+            text.append("Recent form is a key differentiator.")
+        elif is_home_win is True and home_form.count('L') >= 3:
+            # Nuance: Favored despite bad form (likely odds/strength factor)
+            text.append(f"Despite recent struggles, {winner} is tipped to bounce back.")
+
+        # 3. Key Insight
+        if is_home_win is True:
+            text.append("Home advantage plays a significant role in this forecast.")
+        elif is_home_win is False:
+            text.append(f"The model suggests {winner} will overcome the away disadvantage.")
+        
+        return " ".join(text)
 
     def _fallback_prediction(self, match_data):
         # Fallback to simple logic if ML model fails for specific teams
@@ -127,32 +184,9 @@ class MatchPredictor:
             "home_win_prob": 40.0,
             "draw_prob": 30.0,
             "away_win_prob": 30.0,
-            "reasoning": "Team name mismatch in historical database. Defaulting to Home Advantage."
+            "reasoning": "Standard home advantage applies due to missing historical data."
         }
 
     def _generate_reasoning(self, match_data, p_home, p_draw, p_away):
-        reasoning = []
-        
-        if p_home > 50:
-            reasoning.append(f"AI Model strongly favors {match_data['home_team']} based on historical data.")
-        elif p_away > 50:
-            reasoning.append(f"Historical trends indicate a likely win for {match_data['away_team']}.")
-        elif p_home > p_away:
-            reasoning.append(f"{match_data['home_team']} has a slight edge.")
-        else:
-            reasoning.append("Model predicts a very balanced game.")
-            
-        home_injuries = len(match_data['home_injuries'])
-        away_injuries = len(match_data['away_injuries'])
-        
-        if home_injuries > 2:
-            reasoning.append(f"However, {match_data['home_team']} has injury concerns.")
-        if away_injuries > 2:
-            reasoning.append(f"{match_data['away_team']} is missing key players.")
-
-        if match_data['last_5_matches_home'].count('W') >= 3:
-            reasoning.append(f"{match_data['home_team']} is in good form.")
-        elif match_data['last_5_matches_home'].count('L') >= 3:
-             reasoning.append(f"{match_data['home_team']} has been struggling recently.")
-            
-        return " ".join(reasoning)
+        # Deprecated in favor of generate_explanation, keeping for legacy if needed or removing
+        return ""
