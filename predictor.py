@@ -113,11 +113,8 @@ class MatchPredictor:
 
         # Generate Reasoning using the new Engine
         explanation = self.generate_explanation(
-            match_data['home_team'], 
-            match_data['away_team'], 
-            {'home': p_home, 'draw': p_draw, 'away': p_away}, 
-            match_data['last_5_matches_home'], 
-            match_data['last_5_matches_away']
+            match_data,
+            {'home': p_home, 'draw': p_draw, 'away': p_away}
         )
 
         return {
@@ -127,10 +124,15 @@ class MatchPredictor:
             "reasoning": explanation
         }
 
-    def generate_explanation(self, home_team, away_team, probs, home_form, away_form):
+    def generate_explanation(self, match_data, probs):
         """
-        Generates a conversational explanation for the prediction.
+        Generates a conversational explanation for the prediction, leveraging FPL strength data if available.
         """
+        home_team = match_data['home_team']
+        away_team = match_data['away_team']
+        home_form = match_data['last_5_matches_home']
+        away_form = match_data['last_5_matches_away']
+        
         # Determine Winner
         if probs['home'] > probs['away'] and probs['home'] > probs['draw']:
             winner = home_team
@@ -146,8 +148,21 @@ class MatchPredictor:
             is_home_win = None
 
         text = []
+        
+        # 1. FPL Strength Analysis (New)
+        # Check if FPL data is present (it might not be if API failed or offline)
+        h_att = match_data.get('home_strength_attack')
+        a_def = match_data.get('away_strength_defence')
+        
+        if h_att and a_def:
+            # Simple heuristic: High Attack vs Low Defense
+            # FPL ratings are usually around 1000-1350
+            if is_home_win and h_att > a_def + 50:
+                text.append(f"{home_team}'s attack (Rated {h_att}) is expected to overwhelm {away_team}'s defense.")
+            elif not is_home_win and match_data.get('away_strength_attack', 0) > match_data.get('home_strength_defence', 0) + 50:
+                 text.append(f"{away_team}'s superior attacking options are the key difference.")
 
-        # 1. Confidence Check
+        # 2. Confidence Check
         if winner == "Draw":
             text.append("The model predicts a deadlock due to evenly matched historical performance.")
         elif win_prob > 60:
@@ -157,7 +172,7 @@ class MatchPredictor:
         else:
             text.append(f"The outcome is uncertain, but {winner} is marginally favored.")
 
-        # 2. Form Factor
+        # 3. Form Factor
         # Calculate recent wins
         home_wins = home_form.count('W')
         away_wins = away_form.count('W')
@@ -165,17 +180,11 @@ class MatchPredictor:
         if is_home_win is True and home_wins > away_wins:
             text.append("Recent form is a key differentiator.")
         elif is_home_win is False and away_wins > home_wins:
-            text.append("Recent form is a key differentiator.")
+            text.append(f"{winner} enters the match in better form.")
         elif is_home_win is True and home_form.count('L') >= 3:
             # Nuance: Favored despite bad form (likely odds/strength factor)
             text.append(f"Despite recent struggles, {winner} is tipped to bounce back.")
-
-        # 3. Key Insight
-        if is_home_win is True:
-            text.append("Home advantage plays a significant role in this forecast.")
-        elif is_home_win is False:
-            text.append(f"The model suggests {winner} will overcome the away disadvantage.")
-        
+            
         return " ".join(text)
 
     def _fallback_prediction(self, match_data):

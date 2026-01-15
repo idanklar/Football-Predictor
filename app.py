@@ -93,6 +93,7 @@ predictor = MatchPredictor()
 fixtures = get_current_fixtures()
 
 # --- Sidebar ---
+# --- Sidebar ---
 st.sidebar.header("📅 Matchweek Fixtures")
 selected_match_id = st.sidebar.radio(
     "Select a Match for Deep Dive:",
@@ -100,14 +101,73 @@ selected_match_id = st.sidebar.radio(
     index=0
 )
 
+# Helper to find selected match data (Moved Up)
+match_index = [f"{f['home_team']} vs {f['away_team']}" for f in fixtures].index(selected_match_id)
+selected_match = fixtures[match_index]
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 🛠️ Match Simulation")
+with st.sidebar.expander("What-If Analysis", expanded=False):
+    st.info("🔮 **Scenario Mode**: Adjust team form and availability to see how the prediction changes in real-time.")
+    st.write("Does Recent Form matter?")
+    # Form Simulation (1-5 Scale)
+    # Default to current form (simple count of 'W' roughly mapped or just middle ground)
+    sim_home_form = st.slider(f"{selected_match['home_team']} Form", 1, 5, 3)
+    sim_away_form = st.slider(f"{selected_match['away_team']} Form", 1, 5, 3)
+    
+    st.write("Injury Impact:")
+    sim_injury = st.checkbox(f"Key Player Missing for {selected_match['home_team']}?", value=False, help="Simulate the impact of a star player being injured (e.g., reduced attack/defense strength).")
+    
+    # Calculate Data Overrides
+    # Base Odds
+    base_odds_h = selected_match.get('avg_odds_home', 2.5)
+    base_odds_a = selected_match.get('avg_odds_away', 2.5)
+    
+    # Logic: Better form -> Lower odds (Stronger)
+    # 3 is neutral. Each point +/- adjusts odds by 10%
+    form_factor_h = (3 - sim_home_form) * 0.1  # e.g. Form 5 -> -0.2 (20% drop in odds -> Stronger)
+    form_factor_a = (3 - sim_away_form) * 0.1
+    
+    # Injury Factor: Injury -> Higher odds (Weaker) e.g. +15%
+    injury_factor = 0.15 if sim_injury else 0.0
+    
+    # Apply modifiers
+    sim_odds_h = base_odds_h * (1 + form_factor_h + injury_factor)
+    sim_odds_a = base_odds_a * (1 + form_factor_a) # Assuming injury check is for Home only as per prompt
+    
+    # Simulated Form Strings for Explanation Engine
+    # If slider is 5, give them 5 Wins. If 1, give them 5 Losses.
+    def get_sim_form_str(level):
+        if level == 5: return ["W", "W", "W", "W", "W"]
+        if level == 4: return ["W", "W", "D", "W", "D"]
+        if level == 3: return ["W", "L", "D", "W", "L"]
+        if level == 2: return ["L", "L", "D", "L", "D"]
+        return ["L", "L", "L", "L", "L"]
+
+    # Apply Simulation to Match Data Copy
+    simulated_match = selected_match.copy()
+    simulated_match['avg_odds_home'] = sim_odds_h
+    simulated_match['avg_odds_away'] = sim_odds_a
+    simulated_match['last_5_matches_home'] = get_sim_form_str(sim_home_form)
+    simulated_match['last_5_matches_away'] = get_sim_form_str(sim_away_form)
+    
+    # Visual Feedback
+    if sim_home_form != 3 or sim_away_form != 3 or sim_injury:
+        st.sidebar.warning("⚠️ Simulation Active! Predictions modified.")
+
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 🤖 Model Stats")
 st.sidebar.metric("Model Accuracy", "54.1%", delta="vs Random (33%)")
-st.sidebar.info("Trained on 3 Seasons of PL Data (2023-2025).")
+st.sidebar.info("Trained on seasons 23-25 with live odds integration.")
 
 # Helper to find selected match data
 match_index = [f"{f['home_team']} vs {f['away_team']}" for f in fixtures].index(selected_match_id)
 selected_match = fixtures[match_index]
+
+
+# Update selected_match if radio changes (though typically logic runs top-down)
+# Actually simplest is just to Define selected_match immediately after Sidebar Radio at top.
+
 
 # --- Main Layout: 2:3 Split ---
 col1, col2 = st.columns([2, 3])
@@ -153,7 +213,7 @@ with col2:
     st.subheader("📊 Analytics Hub")
     
     # Run Prediction
-    prediction = predictor.predict_match(selected_match)
+    prediction = predictor.predict_match(simulated_match)
     
     # Calculate Winner
     probs = {

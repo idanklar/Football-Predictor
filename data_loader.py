@@ -1,5 +1,42 @@
 from datetime import datetime, timedelta
 
+import requests
+
+def fetch_fpl_strength():
+    """
+    Fetches official strength metrics from FPL API.
+    Returns a dict mapping Team Name -> Strength Dict
+    """
+    url = "https://fantasy.premierleague.com/api/bootstrap-static/"
+    try:
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+        data = response.json()
+        teams = data['teams']
+        
+        strength_map = {}
+        for t in teams:
+            name = t['name']
+            strength_map[name] = {
+                'strength': t['strength'],
+                'strength_attack_home': t['strength_attack_home'],
+                'strength_attack_away': t['strength_attack_away'],
+                'strength_defence_home': t['strength_defence_home'],
+                'strength_defence_away': t['strength_defence_away'],
+                'strength_overall_home': t['strength_overall_home'],
+                'strength_overall_away': t['strength_overall_away']
+            }
+            # Custom mappings
+            if name == "Man Utd": strength_map["Manchester United"] = strength_map[name]
+            if name == "Man City": strength_map["Manchester City"] = strength_map[name] 
+            if name == "Spurs": strength_map["Tottenham"] = strength_map[name]
+            if name == "Forest": strength_map["Nottingham Forest"] = strength_map[name]
+
+        return strength_map
+    except Exception as e:
+        print(f"Error fetching FPL data: {e}")
+        return None
+
 def get_current_fixtures():
     """
     Returns a list of mock Premier League fixtures for the upcoming matchweek.
@@ -20,12 +57,14 @@ def get_current_fixtures():
             "last_5_matches_away": ["W", "W", "D", "D", "D"], # Man City Form (Real Data)
             "home_team_logo": "https://upload.wikimedia.org/wikipedia/en/thumb/7/7a/Manchester_United_FC_crest.svg/1200px-Manchester_United_FC_crest.svg.png",
             "away_team_logo": "https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Manchester_City_FC_badge.svg/1200px-Manchester_City_FC_badge.svg.png",
-            "home_strength": 2, # Tier 2
-            "away_strength": 1,  # Tier 1
+            "home_strength": 2, # Fallback
+            "away_strength": 1, 
             "avg_odds_home": 3.40,
             "avg_odds_draw": 3.10,
             "avg_odds_away": 1.60
         },
+        # ... Other fixtures ...
+
         {
             "id": 2,
             "home_team": "Tottenham",
@@ -81,4 +120,24 @@ def get_current_fixtures():
             "avg_odds_away": 16.00
         }
     ]
+    
+    # Enrich with FPL Data (Fetch Real Data)
+    fpl_data = fetch_fpl_strength()
+    
+    if fpl_data:
+        for f in fixtures:
+            h_team = f['home_team']
+            a_team = f['away_team']
+            
+            # Try to match names
+            if h_team in fpl_data:
+                f['home_strength_attack'] = fpl_data[h_team]['strength_attack_home']
+                f['home_strength_defence'] = fpl_data[h_team]['strength_defence_home']
+                f['home_strength_overall'] = fpl_data[h_team]['strength_overall_home']
+            
+            if a_team in fpl_data:
+                f['away_strength_attack'] = fpl_data[a_team]['strength_attack_away']
+                f['away_strength_defence'] = fpl_data[a_team]['strength_defence_away']
+                f['away_strength_overall'] = fpl_data[a_team]['strength_overall_away']
+
     return fixtures

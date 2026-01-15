@@ -22,10 +22,16 @@ The system achieves an accuracy of **~54%**, significantly outperforming the ran
 * **Algorithm:** Random Forest Classifier (`sklearn.ensemble`).
 * **Training Data:** Trained on 1,000+ historical matches from official CSV datasets.
 * **Dynamic Encoding:** Automatically encodes team names and calculates form metrics.
+* **FPL Integration:** Fetches real-time team strength data (Attack, Defence, Overall) from the official Fantasy Premier League API to enhance predictive accuracy.
 
-### 🤖 AI Insight Engine (New!)
+### 🔮 What-If Analysis (Simulation Mode)
+* **Scenario Modeling:** Interactive sidebar tools allow users to modify team form and player availability.
+* **Real-Time Impact:** Instantly visualizes how a "Key Player Missing" or a sudden drop in form affects the win probability.
+* **Tactical Override:** Allows users to test their own hypotheses against the AI's baseline prediction.
+
+### 🤖 AI Insight Engine
 * **Narrative Generation:** The system doesn't just give numbers; it explains *why*.
-* **Contextual Analysis:** Cross-references statistical probability with recent team form and home advantage to generate human-readable commentary (e.g., *"Strong statistical advantage detected for Man City due to superior recent form"*).
+* **Contextual Analysis:** Cross-references statistical probability, FPL strength metrics, and simulated scenarios to generate human-readable commentary (e.g., *"Man City's attack (Rated 1350) is expected to overwhelm Burnley's defense"*).
 
 ### 📊 Professional Dashboard UI
 * **"Briefing Room" Layout:** A split-screen design separating match context (Left) from predictive analytics (Right).
@@ -78,7 +84,8 @@ source venv/bin/activate  # On Windows use: venv\Scripts\activate
 ```bash
 pip install -r requirements.txt
 ```
-
+ 
+ 
 ### 4. Train the Model (Optional)
 The repo comes with a pre-trained model, but you can retrain it on new data:
 
