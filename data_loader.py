@@ -5,83 +5,68 @@ def get_current_fixtures():
     Returns a list of mock Premier League fixtures for the upcoming matchweek.
     Each fixture is a dictionary containing match details.
     """
-    today = datetime.now()
     
+    # Matchweek 22 Fixtures
     fixtures = [
         {
             "id": 1,
-            "home_team": "Arsenal",
-            "away_team": "Tottenham",
-            "match_time": (today + timedelta(days=2)).strftime("%Y-%m-%d 15:00:00"),
-            "weather_condition": "Rainy",
-            "home_injuries": ["Gabriel Jesus", "Thomas Partey"],
-            "away_injuries": ["James Maddison", "Micky van de Ven"],
-            "last_5_matches_home": ["W", "W", "D", "W", "L"],
-            "last_5_matches_away": ["L", "D", "W", "W", "W"],
-            "home_strength": 1, # Tier 1
-            "away_strength": 1,  # Tier 1
-            "home_team_logo": "https://upload.wikimedia.org/wikipedia/en/5/53/Arsenal_FC.svg",
-            "away_team_logo": "https://upload.wikimedia.org/wikipedia/en/b/b4/Tottenham_Hotspur.svg"
+            "home_team": "Manchester United",
+            "away_team": "Manchester City",
+            "match_time": "2026-01-17 14:30:00",
+            "weather_condition": "Rainy 🌧️",
+            "home_injuries": ["Luke Shaw (Muscle)", "Mason Mount (Calf)"],
+            "away_injuries": ["Kevin De Bruyne (Rest)", "Rodri (Suspended)"],
+            "last_5_matches_home": ["W", "L", "W", "D", "W"],
+            "last_5_matches_away": ["W", "W", "W", "W", "D"],
+            "home_team_logo": "https://upload.wikimedia.org/wikipedia/en/thumb/7/7a/Manchester_United_FC_crest.svg/1200px-Manchester_United_FC_crest.svg.png",
+            "away_team_logo": "https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Manchester_City_FC_badge.svg/1200px-Manchester_City_FC_badge.svg.png",
+            "home_strength": 2, # Tier 2
+            "away_strength": 1  # Tier 1
         },
         {
             "id": 2,
-            "home_team": "Liverpool",
-            "away_team": "Luton Town",
-            "match_time": (today + timedelta(days=2)).strftime("%Y-%m-%d 17:30:00"),
-            "weather_condition": "Clear",
-            "home_injuries": ["Thiago Alcantara"],
-            "away_injuries": [],
-            "last_5_matches_home": ["W", "D", "W", "W", "W"],
-            "last_5_matches_away": ["L", "L", "L", "D", "W"],
-            "home_strength": 1,
-            "away_strength": 3,
-            "home_team_logo": "https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg",
-            "away_team_logo": "https://upload.wikimedia.org/wikipedia/en/9/9d/Luton_Town_logo.svg"
+            "home_team": "Tottenham",
+            "away_team": "West Ham",
+            "match_time": "2026-01-17 17:00:00",
+            "weather_condition": "Cloudy ☁️",
+            "home_injuries": ["Maddison (Ankle)", "Van de Ven (Hamstring)"],
+            "away_injuries": ["Antonio (Knee)", "Paqueta (Calf)"],
+            "last_5_matches_home": ["W", "W", "L", "D", "W"],
+            "last_5_matches_away": ["L", "D", "W", "L", "L"],
+            "home_team_logo": "https://upload.wikimedia.org/wikipedia/en/thumb/b/b4/Tottenham_Hotspur.svg/1200px-Tottenham_Hotspur.svg.png",
+            "away_team_logo": "https://upload.wikimedia.org/wikipedia/en/thumb/c/c2/West_Ham_United_FC_logo.svg/1200px-West_Ham_United_FC_logo.svg.png",
+            "home_strength": 2,
+            "away_strength": 2
         },
         {
             "id": 3,
-            "home_team": "Manchester City",
-            "away_team": "Chelsea",
-            "match_time": (today + timedelta(days=3)).strftime("%Y-%m-%d 14:00:00"),
-            "weather_condition": "Cloudy",
-            "home_injuries": ["Kevin De Bruyne"],
-            "away_injuries": ["Reece James", "Ben Chilwell", "Christopher Nkunku"],
-            "last_5_matches_home": ["W", "W", "W", "W", "W"],
-            "last_5_matches_away": ["W", "L", "W", "L", "D"],
-            "home_strength": 1,
-            "away_strength": 2,
-            "home_team_logo": "https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg",
-            "away_team_logo": "https://upload.wikimedia.org/wikipedia/en/c/cc/Chelsea_FC.svg"
+            "home_team": "Nottingham Forest",
+            "away_team": "Arsenal",
+            "match_time": "2026-01-17 19:30:00",
+            "weather_condition": "Cold Night ❄️",
+            "home_injuries": ["Awoniyi (Groin)"],
+            "away_injuries": ["Timber (Knee)", "Partey (Thigh)"],
+            "last_5_matches_home": ["D", "L", "W", "L", "D"],
+            "last_5_matches_away": ["W", "W", "D", "W", "W"],
+            "home_team_logo": "https://upload.wikimedia.org/wikipedia/en/thumb/d/d2/Nottingham_Forest_gridiron.svg/1200px-Nottingham_Forest_gridiron.svg.png", # Using Gridiron logo variation as fallback or standard one but PNG
+            "away_team_logo": "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Arsenal_FC.svg/1200px-Arsenal_FC.svg.png",
+            "home_strength": 3,
+            "away_strength": 1
         },
         {
             "id": 4,
-            "home_team": "Aston Villa",
-            "away_team": "Manchester United",
-            "match_time": (today + timedelta(days=3)).strftime("%Y-%m-%d 16:30:00"),
-            "weather_condition": "Clear",
-            "home_injuries": ["Tyrone Mings", "Emiliano Buendia"],
-            "away_injuries": ["Lisandro Martinez", "Luke Shaw"],
-            "last_5_matches_home": ["W", "L", "W", "D", "W"],
-            "last_5_matches_away": ["W", "W", "W", "D", "L"],
-            "home_strength": 2,
-            "away_strength": 1, # Historically/Strength-wise treated as 1 or 2
-            "home_team_logo": "https://upload.wikimedia.org/wikipedia/en/f/f9/Aston_Villa_FC_crest_%282016%29.svg",
-            "away_team_logo": "https://upload.wikimedia.org/wikipedia/en/7/7a/Manchester_United_FC_crest.svg"
-        },
-        {
-            "id": 5,
-            "home_team": "Brighton",
-            "away_team": "West Ham",
-            "match_time": (today + timedelta(days=4)).strftime("%Y-%m-%d 20:00:00"),
-            "weather_condition": "Windy",
-            "home_injuries": ["Kaoru Mitoma", "Solly March"],
-            "away_injuries": ["Lucas Paqueta"],
-            "last_5_matches_home": ["D", "L", "W", "D", "L"],
-            "last_5_matches_away": ["W", "D", "L", "D", "W"],
-            "home_strength": 2,
-            "away_strength": 2,
-            "home_team_logo": "https://upload.wikimedia.org/wikipedia/en/f/fd/Brighton_%26_Hove_Albion_logo.svg",
-            "away_team_logo": "https://upload.wikimedia.org/wikipedia/en/c/c2/West_Ham_United_FC_logo.svg"
+            "home_team": "Liverpool",
+            "away_team": "Burnley",
+            "match_time": "2026-01-17 17:00:00",
+            "weather_condition": "Windy 💨",
+            "home_injuries": ["Alisson (Hamstring)", "Jota (Knee)"],
+            "away_injuries": ["Foster (Illness)"],
+            "last_5_matches_home": ["W", "W", "D", "W", "W"],
+            "last_5_matches_away": ["L", "L", "L", "D", "L"],
+            "home_team_logo": "https://upload.wikimedia.org/wikipedia/en/thumb/0/0c/Liverpool_FC.svg/1200px-Liverpool_FC.svg.png",
+            "away_team_logo": "https://upload.wikimedia.org/wikipedia/en/thumb/6/62/Burnley_F.C._Logo.svg/1200px-Burnley_F.C._Logo.svg.png",
+            "home_strength": 1,
+            "away_strength": 3
         }
     ]
     return fixtures
