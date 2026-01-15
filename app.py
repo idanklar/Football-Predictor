@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-import matplotlib.pyplot as plt
 import numpy as np
 from data_loader import get_current_fixtures
 from predictor import MatchPredictor
@@ -14,47 +13,17 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- Custom CSS for "Wow" Factor ---
+# --- Custom CSS ---
 st.markdown("""
     <style>
     .stApp {
         background-color: #0e1117;
         color: #fafafa;
     }
-    .match-card {
-        background-color: #262730;
-        padding: 20px;
-        border-radius: 10px;
-        border: 1px solid #41424b;
-        margin-bottom: 10px;
-        transition: transform 0.2s;
-    }
-    .match-card:hover {
-        transform: scale(1.02);
-        border-color: #ff4b4b;
-    }
-    .injury-card {
-        background-color: #333333;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 10px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    }
-    .injury-title {
-        font-weight: bold;
-        margin-bottom: 5px;
-        display: block;
-        font-size: 1.1em;
-    }
-    .home-injury { color: #FF4B4B; } /* Bright Red */
-    .away-injury { color: #FFD700; } /* Bright Yellow */
-    
-    .team-logo {
-        display: block;
-        margin-left: auto;
-        margin-right: auto;
-        width: 100px;
+    .metric-container {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
     }
     .vs-text {
         font-size: 2rem;
@@ -72,6 +41,28 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
+# --- Helper Function: Injury Card ---
+def render_injury_card(team_name, injuries, color_code):
+    injuries_html = "".join([f"<li>{inj}</li>" for inj in injuries]) if injuries else "<li>No major injuries</li>"
+    st.markdown(f"""
+    <div style="
+        background-color: rgba(50, 50, 50, 0.8);
+        border-left: 5px solid {color_code};
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        color: white;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    ">
+        <h4 style="margin-top:0; color: {color_code}; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">
+            {team_name}
+        </h4>
+        <ul style="padding-left: 20px; margin-bottom: 0; margin-top: 10px;">
+            {injuries_html}
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
+
 # --- Header ---
 st.title("⚽ Premier League AI Predictor")
 st.markdown("### 🚀 Professional Match Forecasting Engine")
@@ -81,7 +72,7 @@ st.markdown("---")
 predictor = MatchPredictor()
 fixtures = get_current_fixtures()
 
-# --- Sidebar / Dashboard ---
+# --- Sidebar ---
 st.sidebar.header("📅 Matchweek Fixtures")
 selected_match_id = st.sidebar.radio(
     "Select a Match for Deep Dive:",
@@ -93,53 +84,51 @@ selected_match_id = st.sidebar.radio(
 match_index = [f"{f['home_team']} vs {f['away_team']}" for f in fixtures].index(selected_match_id)
 selected_match = fixtures[match_index]
 
-# --- Main Dashboard Area ---
-col1, col2 = st.columns([1, 2])
+# --- Main Layout: 2:3 Split ---
+col1, col2 = st.columns([2, 3])
 
+# --- LEFT COLUMN: The Briefing Room ---
 with col1:
-    # Logos and Team Names Header
-    c1, c2, c3 = st.columns([1, 0.8, 1])
-    with c1:
+    st.subheader("📋 The Briefing Room")
+    
+    # Match Header (Logos/VS)
+    h_col1, h_col2, h_col3 = st.columns([1, 0.8, 1])
+    with h_col1:
         st.markdown(f"<div style='text-align: center;'><img src='{selected_match['home_team_logo']}' width='100'></div>", unsafe_allow_html=True)
         st.markdown(f"<p class='team-name-header'>{selected_match['home_team']}</p>", unsafe_allow_html=True)
-    with c2:
+    with h_col2:
         st.markdown("<p class='vs-text'>VS</p>", unsafe_allow_html=True)
-    with c3:
+    with h_col3:
         st.markdown(f"<div style='text-align: center;'><img src='{selected_match['away_team_logo']}' width='100'></div>", unsafe_allow_html=True)
         st.markdown(f"<p class='team-name-header'>{selected_match['away_team']}</p>", unsafe_allow_html=True)
-
+        
     st.write("---")
-    st.write(f"**Date:** {selected_match['match_time']}")
-    st.write(f"**Weather:** {selected_match['weather_condition']}")
     
-    st.markdown("#### 🏥 Injury Report")
-    
-    # Custom HTML Injury Cards
-    home_injuries_str = ', '.join(selected_match['home_injuries']) if selected_match['home_injuries'] else 'No major injuries'
-    away_injuries_str = ', '.join(selected_match['away_injuries']) if selected_match['away_injuries'] else 'No major injuries'
-    
-    st.markdown(f"""
-    <div class="injury-card">
-        <span class="injury-title home-injury">🏠 {selected_match['home_team']} Injuries</span>
-        <span style="color: #ddd;">{home_injuries_str}</span>
-    </div>
-    <div class="injury-card">
-        <span class="injury-title away-injury">✈️ {selected_match['away_team']} Injuries</span>
-        <span style="color: #ddd;">{away_injuries_str}</span>
-    </div>
-    """, unsafe_allow_html=True)
-    
+    # Match Details
+    st.write(f"**🕒 Time:** {selected_match['match_time']}")
+    st.write(f"**🌥️ Weather:** {selected_match['weather_condition']}")
+    st.write("---")
+
+    # Injury Reports
+    st.markdown("#### 🏥 Squad Status")
+    render_injury_card(selected_match['home_team'], selected_match['home_injuries'], "#ff4b4b") # Red for Home
+    render_injury_card(selected_match['away_team'], selected_match['away_injuries'], "#00b4d8") # Blue/Cyan for Away (Distinct from home)
+
+    # Recent Form
+    st.write("---")
     st.markdown("#### 📈 Recent Form (Last 5)")
     st.write(f"**{selected_match['home_team']}**: {' - '.join(selected_match['last_5_matches_home'])}")
     st.write(f"**{selected_match['away_team']}**: {' - '.join(selected_match['last_5_matches_away'])}")
 
+
+# --- RIGHT COLUMN: The Analytics Hub ---
 with col2:
-    st.subheader("🤖 AI Prediction Model")
+    st.subheader("📊 Analytics Hub")
     
     # Run Prediction
     prediction = predictor.predict_match(selected_match)
     
-    # Calculate Winner for Display
+    # Calculate Winner
     probs = {
         selected_match['home_team']: prediction['home_win_prob'],
         "Draw": prediction['draw_prob'],
@@ -148,38 +137,41 @@ with col2:
     predicted_winner = max(probs, key=probs.get)
     win_prob = probs[predicted_winner]
     
-    st.markdown(f"<h2 style='text-align: center; color: #00cc96;'>🏆 Prediction: {predicted_winner} ({win_prob}%)</h2>", unsafe_allow_html=True)
-    
-    # Visualization: Donut Chart for Win Probabilities
+    # Prediction Display
+    st.markdown(f"""
+    <div style="text-align: center; padding: 10px; background-color: rgba(0, 204, 150, 0.1); border-radius: 10px; border: 1px solid #00cc96; margin-bottom: 20px;">
+        <h2 style='margin:0; color: #00cc96;'>🏆 Prediction: {predicted_winner}</h2>
+        <h1 style='margin:0; font-size: 3em; color: white;'>{win_prob}%</h1>
+        <p style='color: #ccc; font-style: italic;'>{prediction['reasoning']}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Donut Chart
     labels = [f"Home: {selected_match['home_team']}", 'Draw', f"Away: {selected_match['away_team']}"]
     values = [prediction['home_win_prob'], prediction['draw_prob'], prediction['away_win_prob']]
-    colors = ['#00cc96', '#ab63fa', '#ef553b'] # Green, Purple, Redish
+    colors = ['#ff4b4b', '#ab63fa', '#00b4d8'] # Red (Home), Purple (Draw), Blue (Away)
     
     fig_donut = go.Figure(data=[go.Pie(labels=labels, values=values, hole=.6, marker_colors=colors)])
     fig_donut.update_layout(
-        annotations=[dict(text=f"{max(values)}%", x=0.5, y=0.5, font_size=20, showarrow=False)],
+        template='plotly_dark',
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white', size=14),
+        annotations=[dict(text="Probabilities", x=0.5, y=0.5, font_size=14, showarrow=False, font=dict(color='white'))],
         showlegend=True,
-        legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5)
+        legend=dict(orientation="h", yanchor="bottom", y=-0.1, xanchor="center", x=0.5, font=dict(color='white')),
+        font=dict(color='white'),
+        height=300,
+        margin=dict(l=0, r=0, t=30, b=0)
     )
     st.plotly_chart(fig_donut, use_container_width=True)
 
-    # Reasoning Text
-    st.info(f"💡 **AI Insight:** {prediction['reasoning']}")
+    st.write("---")
 
-# --- Radar Chart Section ---
-st.markdown("---")
-st.subheader("📊 Tactical Analysis (Radar Chart)")
-
-def create_radar_chart(home_team, away_team, home_strength, away_strength):
+    # Radar Chart
     categories = ['Attack', 'Defense', 'Midfield', 'Counter', 'Set Pieces']
     
-    # Generate semi-random stats based on strength tier (High tier = high stats)
-    # Strength 1 = 80-99, 2 = 60-85, 3 = 40-70
-    np.random.seed(len(home_team) + len(away_team)) # Consistent random per match
-    
+    # Generate Stats
+    np.random.seed(len(selected_match['home_team']) + len(selected_match['away_team']))
     def get_stats(tier):
         if tier == 1: return np.random.randint(80, 99, 5)
         elif tier == 2: return np.random.randint(60, 85, 5)
@@ -187,58 +179,48 @@ def create_radar_chart(home_team, away_team, home_strength, away_strength):
 
     home_stats = get_stats(selected_match['home_strength'])
     away_stats = get_stats(selected_match['away_strength'])
+    # Close the loop
+    home_stats = np.append(home_stats, home_stats[0])
+    away_stats = np.append(away_stats, away_stats[0])
+    categories = categories + [categories[0]]
 
-    fig = go.Figure()
+    fig_radar = go.Figure()
 
-    fig.add_trace(go.Scatterpolar(
+    fig_radar.add_trace(go.Scatterpolar(
         r=home_stats,
         theta=categories,
         fill='toself',
-        name=home_team,
-        line_color='#00cc96',
+        name=selected_match['home_team'],
+        line_color='#ff4b4b',
         opacity=0.7,
         line=dict(width=3)
     ))
     
-    fig.add_trace(go.Scatterpolar(
+    fig_radar.add_trace(go.Scatterpolar(
         r=away_stats,
         theta=categories,
         fill='toself',
-        name=away_team,
-        line_color='#ef553b',
+        name=selected_match['away_team'],
+        line_color='#00b4d8',
         opacity=0.7,
         line=dict(width=3)
     ))
 
-    fig.update_layout(
+    fig_radar.update_layout(
+        template='plotly_dark',
         polar=dict(
-            radialaxis=dict(
-                visible=True,
-                range=[0, 100],
-                tickfont=dict(color='white', size=10),
-                gridcolor='#555'
-            ),
-            angularaxis=dict(
-                tickfont=dict(color='white', size=12, weight='bold'),
-                rotation=90,
-                direction="clockwise"
-            ),
+            radialaxis=dict(visible=True, range=[0, 100], gridcolor='#444'),
             bgcolor='rgba(0,0,0,0)'
         ),
         paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white'),
+        plot_bgcolor='rgba(0,0,0,0)',
         showlegend=True,
-        legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5)
+        legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5, font=dict(color='white')),
+        font=dict(color='white'),
+        height=400,
+        margin=dict(l=40, r=40, t=20, b=40)
     )
-    return fig
-
-radar_fig = create_radar_chart(
-    selected_match['home_team'], 
-    selected_match['away_team'], 
-    selected_match['home_strength'], 
-    selected_match['away_strength']
-)
-st.plotly_chart(radar_fig, use_container_width=True)
+    st.plotly_chart(fig_radar, use_container_width=True)
 
 # Footer
 st.markdown("---")

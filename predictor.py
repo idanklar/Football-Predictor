@@ -1,113 +1,158 @@
+import pickle
+import pandas as pd
+import numpy as np
+import os
 
 class MatchPredictor:
     def __init__(self):
-        pass
+        self.model = None
+        self.encoder = None
+        self.load_model()
 
-    def calculate_form_score(self, last_5):
-        """
-        Calculates a form score based on the last 5 matches.
-        W = 3, D = 1, L = 0.
-        Max score = 15.
-        Normalized to 0-1 range.
-        """
-        score = 0
-        for result in last_5:
-            if result == 'W':
-                score += 3
-            elif result == 'D':
-                score += 1
-        return score / 15.0
+    def load_model(self):
+        try:
+            with open('football_model.pkl', 'rb') as f:
+                self.model = pickle.load(f)
+            with open('encoder.pkl', 'rb') as f:
+                self.encoder = pickle.load(f)
+            print("Model and Encoder loaded successfully.")
+        except FileNotFoundError:
+            print("Model files not found. Please run train_model.py first.")
+
+    def get_team_code(self, team_name):
+        if not self.encoder:
+            return None
+        
+        try:
+            return self.encoder.transform([team_name])[0]
+        except ValueError:
+            # Handle mismatch (e.g., "Man Utd" vs "Manchester United")
+            # Simple heuristic fallback or try to find close match
+            # For now, let's try some common mappings
+            mappings = {
+                "Manchester United": "Man United",
+                "Manchester City": "Man City",
+                "Tottenham": "Tottenham",
+                "West Ham": "West Ham",
+                "Nottingham Forest": "Nott'm Forest",
+                "Luton Town": "Luton",
+                "Sheffield United": "Sheffield United",
+                "Wolverhampton Wanderers": "Wolves",
+                "Brighton": "Brighton",
+                "Newcastle United": "Newcastle",
+                "Bournemouth": "Bournemouth",
+                "Brentford": "Brentford",
+                "Crystal Palace": "Crystal Palace",
+                "Fulham": "Fulham",
+                "Aston Villa": "Aston Villa",
+                "Everton": "Everton"
+            }
+            if team_name in mappings:
+                try:
+                    return self.encoder.transform([mappings[team_name]])[0]
+                except ValueError:
+                    pass
+            
+            # If still fails, try to find substrings?
+            # Creating a dummy code or handling gracefully
+            print(f"Warning: Team '{team_name}' not found in encoder.")
+            return None
 
     def predict_match(self, match_data):
         """
-        Predicts the outcome of a match based on weighted factors.
-        Returns probabilities for Home Win, Draw, Away Win and a reasoning string.
+        Predicts match outcome using Random Forest model.
+        Input: match_data dict
+        Output: Probabilities and reasoning.
         """
-        home_strength = match_data['home_strength']
-        away_strength = match_data['away_strength']
-        home_form = self.calculate_form_score(match_data['last_5_matches_home'])
-        away_form = self.calculate_form_score(match_data['last_5_matches_away'])
-        
-        # Base Probability (Strength Tier based)
-        # Tier 1 vs Tier 3 -> High favor to Tier 1
-        # Tier 1 vs Tier 1 -> Even
-        # Invert tier: 1 is best, 3 is worst. Convert to score: 3 (Tier 1), 2 (Tier 2), 1 (Tier 3)
-        home_tier_score = 4 - home_strength
-        away_tier_score = 4 - away_strength
-        
-        # Initial Strength Weight
-        strength_diff = home_tier_score - away_tier_score
-        
-        # Base points (out of 100 for simplicity of relative calculation)
-        home_points = 35
-        away_points = 35
-        draw_points = 30
-        
-        # Apply Strength Diff (Each tier diff shifts 10%)
-        home_points += strength_diff * 10
-        away_points -= strength_diff * 10
-        
-        # Home Advantage (+10%)
-        home_points += 10
-        away_points -= 5 # Draw takes some hit too maybe
-        draw_points -= 5
-        
-        # Form Impact (Up to 10% swing)
-        form_diff = home_form - away_form # Range -1 to 1
-        home_points += form_diff * 10
-        away_points -= form_diff * 10
-        
-        # Injury Penalty (-5% per injury)
-        home_injury_penalty = len(match_data['home_injuries']) * 5
-        away_injury_penalty = len(match_data['away_injuries']) * 5
-        
-        home_points -= home_injury_penalty
-        away_points -= away_injury_penalty
-        
-        # Redistribute lost points from penalties to the opponent and draw
-        # Actually, let's just reduce the team's score. Normalization will handle percentages.
-        
-        # Ensure points don't go negative or too low logic handled by normalization
-        home_points = max(5, home_points)
-        away_points = max(5, away_points)
-        draw_points = max(5, draw_points)
-        
-        total_points = home_points + away_points + draw_points
-        
-        p_home = round((home_points / total_points) * 100, 1)
-        p_away = round((away_points / total_points) * 100, 1)
-        p_draw = round((draw_points / total_points) * 100, 1)
-        
-        # Reasoning Generation
-        reasoning = []
-        if home_points > away_points + 10:
-            reasoning.append(f"{match_data['home_team']} are strong favorites.")
-        elif away_points > home_points + 10:
-            reasoning.append(f"{match_data['away_team']} are favored to win.")
-        else:
-            reasoning.append("This is expected to be a tight contest.")
-            
-        if strength_diff > 0:
-            reasoning.append(f"Higher squad quality for {match_data['home_team']}.")
-        elif strength_diff < 0:
-             reasoning.append(f"Higher squad quality for {match_data['away_team']}.")
-             
-        reasoning.append(f"Home advantage applied for {match_data['home_team']}.")
-        
-        if len(match_data['home_injuries']) > 2:
-            reasoning.append(f"Significant injury concerns for {match_data['home_team']} negatively impact their chances.")
-            
-        if len(match_data['away_injuries']) > 2:
-            reasoning.append(f"{match_data['away_team']} are struggling with injuries.")
+        if not self.model or not self.encoder:
+            return {
+                "home_win_prob": 33.3,
+                "draw_prob": 33.3,
+                "away_win_prob": 33.3,
+                "reasoning": "Model not loaded. Using equal probabilities."
+            }
 
-        if home_form > 0.8:
-            reasoning.append(f"{match_data['home_team']} are in excellent form.")
-        elif home_form < 0.3:
-            reasoning.append(f"{match_data['home_team']} have been in poor form recently.")
+        home_team = match_data['home_team']
+        away_team = match_data['away_team']
+
+        home_code = self.get_team_code(home_team)
+        away_code = self.get_team_code(away_team)
+
+        if home_code is None or away_code is None:
+            # Fallback logic if teams not found
+            return self._fallback_prediction(match_data)
+
+        # Prepare input for model: Team Codes + Market Odds
+        odds_h = match_data.get('avg_odds_home', 2.0)
+        odds_d = match_data.get('avg_odds_draw', 3.0)
+        odds_a = match_data.get('avg_odds_away', 3.0)
+        
+        input_data = pd.DataFrame([[home_code, away_code, odds_h, odds_d, odds_a]], 
+                                  columns=['HomeTeam_Code', 'AwayTeam_Code', 'AvgH', 'AvgD', 'AvgA'])
+        
+        # Get probabilities [Away, Draw, Home] -> FTR is 0(A), 1(D), 2(H)
+        # Check classes_ attribute to be sure
+        probs = self.model.predict_proba(input_data)[0]
+        
+        # Map probabilities to outcomes based on class order
+        classes = self.model.classes_ # Expected [0, 1, 2]
+        
+        p_away = 0
+        p_draw = 0
+        p_home = 0
+        
+        for cls, prob in zip(classes, probs):
+            if cls == 0: p_away = prob
+            elif cls == 1: p_draw = prob
+            elif cls == 2: p_home = prob
+
+        # Convert to percentage
+        p_home = round(p_home * 100, 1)
+        p_draw = round(p_draw * 100, 1)
+        p_away = round(p_away * 100, 1)
+
+        # Generate Reasoning
+        reasoning = self._generate_reasoning(match_data, p_home, p_draw, p_away)
 
         return {
             "home_win_prob": p_home,
             "draw_prob": p_draw,
             "away_win_prob": p_away,
-            "reasoning": " ".join(reasoning)
+            "reasoning": reasoning
         }
+
+    def _fallback_prediction(self, match_data):
+        # Fallback to simple logic if ML model fails for specific teams
+        return {
+            "home_win_prob": 40.0,
+            "draw_prob": 30.0,
+            "away_win_prob": 30.0,
+            "reasoning": "Team name mismatch in historical database. Defaulting to Home Advantage."
+        }
+
+    def _generate_reasoning(self, match_data, p_home, p_draw, p_away):
+        reasoning = []
+        
+        if p_home > 50:
+            reasoning.append(f"AI Model strongly favors {match_data['home_team']} based on historical data.")
+        elif p_away > 50:
+            reasoning.append(f"Historical trends indicate a likely win for {match_data['away_team']}.")
+        elif p_home > p_away:
+            reasoning.append(f"{match_data['home_team']} has a slight edge.")
+        else:
+            reasoning.append("Model predicts a very balanced game.")
+            
+        home_injuries = len(match_data['home_injuries'])
+        away_injuries = len(match_data['away_injuries'])
+        
+        if home_injuries > 2:
+            reasoning.append(f"However, {match_data['home_team']} has injury concerns.")
+        if away_injuries > 2:
+            reasoning.append(f"{match_data['away_team']} is missing key players.")
+
+        if match_data['last_5_matches_home'].count('W') >= 3:
+            reasoning.append(f"{match_data['home_team']} is in good form.")
+        elif match_data['last_5_matches_home'].count('L') >= 3:
+             reasoning.append(f"{match_data['home_team']} has been struggling recently.")
+            
+        return " ".join(reasoning)
